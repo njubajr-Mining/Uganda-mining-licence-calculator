@@ -252,6 +252,70 @@
   .fx-row > div { flex: 1; }
 
   .tag { font-size: 0.7rem; background: rgba(200,155,60,0.15); color: var(--gold); border-radius: 3px; padding: 0.1em 0.5em; font-family: 'DM Mono', monospace; }
+
+  .section-divider {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  .section-divider span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(200,155,60,0.2);
+  }
+
+  .export-card {
+    grid-column: 1 / -1;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(200,155,60,0.18);
+    border-radius: 6px;
+    padding: 1.5rem;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-row .toggle-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    color: var(--gold-pale);
+  }
+  .toggle-row .toggle-hint {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .export-body { margin-top: 1.2rem; }
+  .export-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1rem;
+  }
+  @media (max-width: 640px) { .export-grid { grid-template-columns: 1fr; } }
+
+  .export-result {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(200,155,60,0.07);
+    border: 1px solid rgba(200,155,60,0.25);
+    border-radius: 4px;
+  }
 </style>
 </head>
 <body>
@@ -349,9 +413,74 @@
     <div class="empty-state">Select a licence type above to see the estimated costs.</div>
   </div>
 
+  <!-- Export Permit Section -->
+  <div class="section-divider"><span>Optional — Export Permits &amp; Gold</span></div>
+
+  <div class="export-card">
+    <div class="toggle-row" onclick="toggleExport()">
+      <span class="toggle-label">Export Permit &amp; Gold Export Estimator</span>
+      <span class="toggle-hint" id="exportToggleHint">▼ expand</span>
+    </div>
+    <div class="export-body" id="exportBody" style="display:none;">
+
+      <div style="background:rgba(181,101,29,0.12); border:1px solid rgba(181,101,29,0.4); border-radius:4px; padding:1rem; margin:0.8rem 0 1.2rem; font-size:0.76rem; line-height:1.7; color:var(--parchment);">
+        <div style="font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; color:var(--gold); margin-bottom:0.5rem; text-transform:uppercase;">&#9888; Legal Requirement — Value Addition &amp; Export Restrictions</div>
+        Under the <strong>Mining and Minerals Act, 2022</strong> and government policy, <strong>export of unprocessed / raw minerals is banned</strong>. All minerals must undergo value addition before export. For gold specifically:
+        <ul style="margin:0.6rem 0 0 1.2rem;">
+          <li>Raw or unrefined gold <strong>cannot legally be exported</strong>.</li>
+          <li>Gold must be refined to a minimum purity of <strong>99.9%</strong> before export.</li>
+          <li>Refining must be done at a <strong>licensed refinery</strong> (e.g. African Gold Refinery, Simba Gold Refinery, Bullion Gold Refinery).</li>
+          <li>You must hold a valid <strong>Mineral Dealer's Licence (precious metals)</strong> or a <strong>Mineral Refining Licence</strong>.</li>
+          <li>Gold trading may <strong>only occur between holders of valid licences</strong> — unlicensed trading is a criminal offence under the Act.</li>
+          <li>Uganda is a signatory to the <strong>ICGLR Mineral Tracking &amp; Certification Scheme</strong> — chain-of-custody documentation is required for gold, cassiterite, wolframite and coltan.</li>
+        </ul>
+      </div>
+
+      <p style="font-size:0.78rem; color:var(--muted); margin-bottom:1.2rem; line-height:1.6;">
+        Export permits are issued <strong style="color:var(--parchment)">per consignment</strong> under the Mining and Minerals (Licensing) Regulations, 2023. Each permit has a fixed fee of UGX 700,000 plus a variable component by mineral class. Gold also attracts a separate <strong style="color:var(--parchment)">URA Export Levy of USD 200 per kilogram</strong> on refined gold, paid to URA at export declaration.
+      </p>
+
+      <div class="export-grid">
+        <div>
+          <label for="exportMineralClass">Mineral class</label>
+          <select id="exportMineralClass" onchange="calcExport()">
+            <option value="gold">Gold — refined 99.9% (USD 200/kg levy + permit)</option>
+            <option value="precious">Other precious metals / stones (1% of value + permit)</option>
+            <option value="base">Base metals (1% of value + permit)</option>
+            <option value="industrial">Industrial minerals (UGX 4,000/tonne + permit)</option>
+          </select>
+        </div>
+        <div>
+          <label for="exportConsignments">Number of consignments</label>
+          <input type="number" id="exportConsignments" min="1" value="1" oninput="calcExport()" />
+        </div>
+        <div id="exportKgRow" style="display:block;">
+          <label for="exportKg">Gold weight per consignment (kg)</label>
+          <input type="number" id="exportKg" min="0" placeholder="e.g. 10" oninput="calcExport()" />
+        </div>
+        <div id="exportValueRow" style="display:none;">
+          <label for="exportValue">Consignment value (USD)</label>
+          <input type="number" id="exportValue" min="0" placeholder="e.g. 50000" oninput="calcExport()" />
+        </div>
+        <div id="exportTonnesRow" style="display:none;">
+          <label for="exportTonnes">Tonnes per consignment</label>
+          <input type="number" id="exportTonnes" min="0" placeholder="e.g. 100" oninput="calcExport()" />
+        </div>
+      </div>
+
+      <div id="goldNotice" style="font-size:0.72rem; color:var(--muted); font-family:'DM Mono',monospace; margin-bottom:1rem; padding:0.6rem 0.8rem; border:1px dashed rgba(200,155,60,0.25); border-radius:3px; line-height:1.6;">
+        Gold export levy: <span style="color:var(--gold-pale)">USD 200 per kg</span> · Mining and Minerals (Export Levy on Refined Gold) Regulations, 2023, revised May 2024 · Purity: <span style="color:var(--gold-pale)">99.9% minimum</span> · Paid to URA separately from DGSM permit.
+      </div>
+
+      <div class="export-result" id="exportResult">
+        <span style="font-size:0.8rem; color:var(--muted); font-style:italic;">Fill in the fields above to estimate export costs.</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Disclaimer -->
   <div class="disclaimer">
-    <strong>Important:</strong> This tool is for general estimation only, based on official statutory fees published by the Directorate of Geological Survey and Mines (DGSM) in 2024 under the Mining and Minerals Act, 2022. Actual costs may vary. This tool does not include ESIA fees, legal/consultant fees, surface rights costs, or Uganda Revenue Authority royalties. Always verify current fees directly with DGSM or a qualified mining lawyer before making investment decisions.
+    <strong>Important:</strong> This tool is for general estimation only, based on official statutory fees published by the DGSM in 2024 under the Mining and Minerals Act, 2022 and subsidiary regulations. The gold export levy (USD 200/kg) has been subject to legal challenges and revisions — always verify the current rate with URA and DGSM before committing. This tool does not include ESIA fees, legal/consultant fees, surface rights costs, royalties, refinery charges, or AML compliance costs. Always consult a qualified mining lawyer before making investment decisions.
   </div>
 
 </main>
@@ -535,6 +664,9 @@ function fmt(ugx, mode, fxRate) {
   return `${u} <span style="color:var(--muted);font-size:0.75em">≈ ${d}</span>`;
 }
 
+// Conversion factors → always billing unit
+// Fees are per hectare or per km² depending on licence
+// 1 km² = 100 hectares | 1 acre = 0.404686 hectares | 1 acre = 0.00404686 km²
 const UNIT_LABELS = { hectare: 'hectares', acre: 'acres', km2: 'km²' };
 
 function toHectares(val, unit) {
@@ -576,11 +708,13 @@ function calculate() {
 
   const f = FEES[key];
   const needsArea = f.rent_unit && f.rent_unit !== 'flat';
-  const billingUnit = f.rent_unit;
+  const billingUnit = f.rent_unit; // 'hectare' or 'km²'
 
+  // Show/hide area input
   areaSection.style.display = needsArea ? 'block' : 'none';
   document.getElementById('areaLabel').textContent = 'Area size';
 
+  // Convert input to billing unit and show conversion hint
   let billingArea = 0;
   if (needsArea && areaRaw > 0) {
     if (billingUnit === 'km²') {
@@ -588,6 +722,8 @@ function calculate() {
     } else {
       billingArea = toHectares(areaRaw, areaUnit);
     }
+
+    // Build conversion hint
     const ha  = toHectares(areaRaw, areaUnit);
     const km  = toKm2(areaRaw, areaUnit);
     const ac  = ha / 0.404686;
@@ -600,9 +736,11 @@ function calculate() {
     areaConversion.textContent = '';
   }
 
+  // Show/hide renewal
   const hasRenewal = f.renewal_app !== null && f.renewal_app !== undefined;
   renewalSection.style.display = hasRenewal ? 'block' : 'none';
 
+  // Compute rent — law charges per whole unit (ceiling)
   let rentPerYear = 0;
   const billedUnits = Math.ceil(billingArea);
   if (f.rent_unit === 'flat') {
@@ -651,6 +789,976 @@ function calculate() {
       Rate used: <span>1 USD = ${fxRate.toLocaleString()} UGX</span> · <span>${f.notes}</span>
     </div>
   `;
+}
+
+function toggleExport() {
+  const body = document.getElementById('exportBody');
+  const hint = document.getElementById('exportToggleHint');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  hint.textContent = open ? '▲ collapse' : '▼ expand';
+  if (open) calcExport();
+}
+
+function calcExport() {
+  const mineralClass = document.getElementById('exportMineralClass').value;
+  const consignments = parseInt(document.getElementById('exportConsignments').value) || 1;
+  const fxRate = parseFloat(document.getElementById('fxRate').value) || 3750;
+  const currency = document.getElementById('currency').value;
+  const kgRow = document.getElementById('exportKgRow');
+  const valueRow = document.getElementById('exportValueRow');
+  const tonnesRow = document.getElementById('exportTonnesRow');
+  const goldNotice = document.getElementById('goldNotice');
+  const result = document.getElementById('exportResult');
+
+  const isGold = mineralClass === 'gold';
+  const isIndustrial = mineralClass === 'industrial';
+  const isValueBased = mineralClass === 'precious' || mineralClass === 'base';
+
+  kgRow.style.display = isGold ? 'block' : 'none';
+  valueRow.style.display = isValueBased ? 'block' : 'none';
+  tonnesRow.style.display = isIndustrial ? 'block' : 'none';
+  goldNotice.style.display = isGold ? 'block' : 'none';
+
+  const FIXED_FEE = 700000; // UGX per consignment permit
+  const GOLD_LEVY_USD = 200; // USD per kg
+  let variableFee = 0;
+  let variableDesc = '';
+  let goldLevyUGX = 0;
+  let goldLevyDesc = '';
+  let missingInput = false;
+
+  if (isGold) {
+    const kg = parseFloat(document.getElementById('exportKg').value) || 0;
+    if (kg <= 0) { missingInput = true; }
+    else {
+      goldLevyUGX = kg * GOLD_LEVY_USD * fxRate;
+      goldLevyDesc = 'URA export levy: USD ' + GOLD_LEVY_USD + ' x ' + kg + ' kg';
+      variableFee = 0;
+    }
+  } else if (isIndustrial) {
+    const tonnes = parseFloat(document.getElementById('exportTonnes').value) || 0;
+    if (tonnes <= 0) { missingInput = true; }
+    else {
+      variableFee = tonnes * 4000;
+      variableDesc = 'Weight fee: UGX 4,000 x ' + tonnes + ' tonnes';
+    }
+  } else {
+    const usdValue = parseFloat(document.getElementById('exportValue').value) || 0;
+    if (usdValue <= 0) { missingInput = true; }
+    else {
+      const ugxValue = usdValue * fxRate;
+      variableFee = ugxValue * 0.01;
+      variableDesc = 'Value fee: 1% of USD ' + usdValue.toLocaleString() + ' (approx UGX ' + Math.round(ugxValue).toLocaleString() + ')';
+    }
+  }
+
+  if (missingInput) {
+    const hint = isGold ? 'gold weight in kg' : isIndustrial ? 'tonnes' : 'consignment value';
+    result.innerHTML = '<span style="font-size:0.8rem; color:var(--muted); font-style:italic;">Enter ' + hint + ' above to calculate.</span>';
+    return;
+  }
+
+  const permitTotal = FIXED_FEE + variableFee;
+  const goldLevyTotal = goldLevyUGX * consignments;
+  const permitsTotal = permitTotal * consignments;
+  const grandTotal = permitsTotal + goldLevyTotal;
+
+  let rows = '';
+  rows += '<div class="cost-row"><span class="desc">DGSM permit fee (fixed, per consignment)</span><span class="amt">' + fmt(FIXED_FEE, currency, fxRate) + '</span></div>';
+  if (variableFee > 0) rows += '<div class="cost-row"><span class="desc">' + variableDesc + '</span><span class="amt">' + fmt(Math.round(variableFee), currency, fxRate) + '</span></div>';
+  if (goldLevyUGX > 0) {
+    rows += '<div class="cost-row" style="border-top:1px dashed rgba(200,155,60,0.2); margin-top:0.3rem; padding-top:0.6rem;"><span class="desc" style="color:var(--gold-pale);">' + goldLevyDesc + ' (URA levy, per consignment)</span><span class="amt">' + fmt(Math.round(goldLevyUGX), currency, fxRate) + '</span></div>';
+  }
+  rows += '<div class="cost-row total"><span class="desc">Total for ' + consignments + ' consignment' + (consignments > 1 ? 's' : '') + '</span><span class="amt">' + fmt(Math.round(grandTotal), currency, fxRate) + '</span></div>';
+
+  let source = isGold
+    ? 'DGSM permit: S.I. No. 72 (2023) · URA gold levy: Mining and Minerals (Export Levy on Refined Gold) Regulations, 2023, revised May 2024'
+    : 'Mining and Minerals (Licensing) Regulations, 2023 · S.I. No. 72';
+
+  result.innerHTML = '<div class="cost-rows">' + rows + '</div><div class="usd-note" style="margin-top:0.8rem;">Source: <span>' + source + '</span></div>';
+}
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uganda Mining Licence Cost Estimator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --earth: #1a1208;
+    --gold: #c89b3c;
+    --gold-light: #e8c46a;
+    --gold-pale: #f5e4a8;
+    --copper: #b5651d;
+    --stone: #2d2416;
+    --parchment: #f9f2e3;
+    --cream: #fdf8ee;
+    --muted: #7a6a4a;
+    --green: #2d5a27;
+    --red: #7a2020;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--earth);
+    color: var(--parchment);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(200,155,60,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(181,101,29,0.10) 0%, transparent 60%);
+  }
+
+  header {
+    border-bottom: 1px solid rgba(200,155,60,0.25);
+    padding: 2.5rem 2rem 2rem;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(200,155,60,0.4);
+    padding: 0.3em 0.8em;
+    border-radius: 2px;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    color: var(--gold-light);
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 640px) {
+    main { grid-template-columns: 1fr; padding: 1rem; }
+  }
+
+  .card {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(200,155,60,0.18);
+    border-radius: 6px;
+    padding: 1.5rem;
+  }
+
+  .card.full { grid-column: 1 / -1; }
+
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(200,155,60,0.2);
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  select, input[type="number"] {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(200,155,60,0.25);
+    border-radius: 4px;
+    color: var(--parchment);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 1.1rem;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23c89b3c'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    padding-right: 2rem;
+  }
+
+  select:focus, input[type="number"]:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(200,155,60,0.12);
+  }
+
+  select option { background: #1a1208; }
+
+  .field-group { margin-bottom: 0; }
+
+  .result-card {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, rgba(200,155,60,0.12), rgba(181,101,29,0.08));
+    border: 1px solid rgba(200,155,60,0.4);
+    border-radius: 6px;
+    padding: 1.8rem;
+  }
+
+  .result-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--gold-pale);
+    margin-bottom: 1.2rem;
+  }
+
+  .cost-rows { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .cost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid rgba(200,155,60,0.1);
+    font-size: 0.85rem;
+  }
+
+  .cost-row:last-child { border-bottom: none; }
+
+  .cost-row .desc { color: var(--muted); }
+
+  .cost-row .amt {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--gold-light);
+  }
+
+  .cost-row.total {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(200,155,60,0.3);
+    border-bottom: none;
+  }
+
+  .cost-row.total .desc {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--parchment);
+    font-weight: 700;
+  }
+
+  .cost-row.total .amt {
+    font-size: 1.15rem;
+    color: var(--gold-light);
+    font-weight: 500;
+  }
+
+  .usd-note {
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    border-top: 1px dashed rgba(200,155,60,0.2);
+    padding-top: 0.8rem;
+  }
+
+  .usd-note span { color: var(--gold-pale); }
+
+  .disclaimer {
+    grid-column: 1 / -1;
+    font-size: 0.72rem;
+    color: rgba(122,106,74,0.8);
+    line-height: 1.6;
+    padding: 1rem 1.2rem;
+    border: 1px dashed rgba(200,155,60,0.15);
+    border-radius: 4px;
+  }
+
+  .disclaimer strong { color: var(--muted); }
+
+  .empty-state {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  .ore-icon {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .fx-row {
+    display: flex;
+    gap: 0.8rem;
+  }
+  .fx-row > div { flex: 1; }
+
+  .tag { font-size: 0.7rem; background: rgba(200,155,60,0.15); color: var(--gold); border-radius: 3px; padding: 0.1em 0.5em; font-family: 'DM Mono', monospace; }
+
+  .section-divider {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  .section-divider span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(200,155,60,0.2);
+  }
+
+  .export-card {
+    grid-column: 1 / -1;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(200,155,60,0.18);
+    border-radius: 6px;
+    padding: 1.5rem;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-row .toggle-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    color: var(--gold-pale);
+  }
+  .toggle-row .toggle-hint {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .export-body { margin-top: 1.2rem; }
+  .export-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1rem;
+  }
+  @media (max-width: 640px) { .export-grid { grid-template-columns: 1fr; } }
+
+  .export-result {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(200,155,60,0.07);
+    border: 1px solid rgba(200,155,60,0.25);
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge"><span class="ore-icon"></span> Uganda DGSM · Mining and Minerals Act 2022</div>
+  <h1>Mining Licence<br>Cost Estimator</h1>
+  <p class="subtitle">Statutory fees based on official 2024 DGSM licensing procedures</p>
+</header>
+
+<main>
+
+  <!-- Licence Type -->
+  <div class="card">
+    <div class="card-label">Licence Type</div>
+    <div class="field-group">
+      <label for="licenceType">Select licence category</label>
+      <select id="licenceType" onchange="calculate()">
+        <option value="">— Choose a licence —</option>
+        <optgroup label="Mineral Rights">
+          <option value="prospecting">Prospecting Licence (PL)</option>
+          <option value="exploration">Exploration Licence (EL)</option>
+          <option value="retention">Retention Licence (RL)</option>
+          <option value="large_scale">Large Scale Mining Licence (LML)</option>
+          <option value="medium_scale">Medium Scale Mining Licence (MML)</option>
+          <option value="small_scale">Small Scale Mining Licence (SML)</option>
+          <option value="artisanal">Artisanal Mining Licence (AML)</option>
+        </optgroup>
+        <optgroup label="Beneficiation">
+          <option value="processing">Mineral Processing Licence (MPL)</option>
+          <option value="smelting">Mineral Smelting Licence (MSL)</option>
+          <option value="refining">Mineral Refining Licence (MRL)</option>
+        </optgroup>
+        <optgroup label="Trade">
+          <option value="dealer_industrial">Dealer Licence — Industrial Minerals</option>
+          <option value="dealer_base">Dealer Licence — Base Metals</option>
+          <option value="dealer_precious_metal">Dealer Licence — Precious Metals</option>
+          <option value="dealer_precious_stone">Dealer Licence — Precious Stones</option>
+          <option value="goldsmith">Goldsmith Licence (GSL)</option>
+        </optgroup>
+      </select>
+
+      <div id="areaSection" style="display:none;">
+        <label id="areaLabel" for="area">Area size</label>
+        <div style="display:flex; gap:0.6rem; align-items:flex-start;">
+          <input type="number" id="area" min="0" placeholder="e.g. 50" oninput="calculate()" style="margin-bottom:0.4rem; flex:1;" />
+          <select id="areaUnit" onchange="calculate()" style="width:110px; margin-bottom:0.4rem; flex-shrink:0;">
+            <option value="hectare">Hectares</option>
+            <option value="acre">Acres</option>
+            <option value="km2">km²</option>
+          </select>
+        </div>
+        <div id="areaConversion" style="font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--muted); margin-bottom:1rem; min-height:1.2em;"></div>
+      </div>
+
+      <div id="renewalSection" style="display:none;">
+        <label for="isRenewal">Application type</label>
+        <select id="isRenewal" onchange="calculate()">
+          <option value="new">New application</option>
+          <option value="renewal">Renewal</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Currency -->
+  <div class="card">
+    <div class="card-label">Currency</div>
+    <div class="fx-row">
+      <div>
+        <label for="currency">Display in</label>
+        <select id="currency" onchange="calculate()">
+          <option value="ugx">UGX (Uganda Shillings)</option>
+          <option value="usd">USD (US Dollars)</option>
+          <option value="both" selected>Both</option>
+        </select>
+      </div>
+      <div>
+        <label for="fxRate">UGX per 1 USD</label>
+        <input type="number" id="fxRate" value="3750" min="1" oninput="calculate()" />
+      </div>
+    </div>
+    <label for="annualYears">Annual rent — number of years</label>
+    <select id="annualYears" onchange="calculate()">
+      <option value="1">1 year</option>
+      <option value="2">2 years</option>
+      <option value="3">3 years</option>
+      <option value="5">5 years</option>
+      <option value="10">10 years</option>
+    </select>
+  </div>
+
+  <!-- Result -->
+  <div class="result-card" id="resultCard">
+    <div class="empty-state">Select a licence type above to see the estimated costs.</div>
+  </div>
+
+  <!-- Export Permit Section -->
+  <div class="section-divider"><span>Optional — Export Permits &amp; Gold</span></div>
+
+  <div class="export-card">
+    <div class="toggle-row" onclick="toggleExport()">
+      <span class="toggle-label">Export Permit &amp; Gold Export Estimator</span>
+      <span class="toggle-hint" id="exportToggleHint">▼ expand</span>
+    </div>
+    <div class="export-body" id="exportBody" style="display:none;">
+
+      <div style="background:rgba(181,101,29,0.12); border:1px solid rgba(181,101,29,0.4); border-radius:4px; padding:1rem; margin:0.8rem 0 1.2rem; font-size:0.76rem; line-height:1.7; color:var(--parchment);">
+        <div style="font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; color:var(--gold); margin-bottom:0.5rem; text-transform:uppercase;">&#9888; Legal Requirement — Value Addition &amp; Export Restrictions</div>
+        Under the <strong>Mining and Minerals Act, 2022</strong> and government policy, <strong>export of unprocessed / raw minerals is banned</strong>. All minerals must undergo value addition before export. For gold specifically:
+        <ul style="margin:0.6rem 0 0 1.2rem;">
+          <li>Raw or unrefined gold <strong>cannot legally be exported</strong>.</li>
+          <li>Gold must be refined to a minimum purity of <strong>99.9%</strong> before export.</li>
+          <li>Refining must be done at a <strong>licensed refinery</strong> (e.g. African Gold Refinery, Simba Gold Refinery, Bullion Gold Refinery).</li>
+          <li>You must hold a valid <strong>Mineral Dealer's Licence (precious metals)</strong> or a <strong>Mineral Refining Licence</strong>.</li>
+          <li>Gold trading may <strong>only occur between holders of valid licences</strong> — unlicensed trading is a criminal offence under the Act.</li>
+          <li>Uganda is a signatory to the <strong>ICGLR Mineral Tracking &amp; Certification Scheme</strong> — chain-of-custody documentation is required for gold, cassiterite, wolframite and coltan.</li>
+        </ul>
+      </div>
+
+      <p style="font-size:0.78rem; color:var(--muted); margin-bottom:1.2rem; line-height:1.6;">
+        Export permits are issued <strong style="color:var(--parchment)">per consignment</strong> under the Mining and Minerals (Licensing) Regulations, 2023. Each permit has a fixed fee of UGX 700,000 plus a variable component by mineral class. Gold also attracts a separate <strong style="color:var(--parchment)">URA Export Levy of USD 200 per kilogram</strong> on refined gold, paid to URA at export declaration.
+      </p>
+
+      <div class="export-grid">
+        <div>
+          <label for="exportMineralClass">Mineral class</label>
+          <select id="exportMineralClass" onchange="calcExport()">
+            <option value="gold">Gold — refined 99.9% (USD 200/kg levy + permit)</option>
+            <option value="precious">Other precious metals / stones (1% of value + permit)</option>
+            <option value="base">Base metals (1% of value + permit)</option>
+            <option value="industrial">Industrial minerals (UGX 4,000/tonne + permit)</option>
+          </select>
+        </div>
+        <div>
+          <label for="exportConsignments">Number of consignments</label>
+          <input type="number" id="exportConsignments" min="1" value="1" oninput="calcExport()" />
+        </div>
+        <div id="exportKgRow" style="display:block;">
+          <label for="exportKg">Gold weight per consignment (kg)</label>
+          <input type="number" id="exportKg" min="0" placeholder="e.g. 10" oninput="calcExport()" />
+        </div>
+        <div id="exportValueRow" style="display:none;">
+          <label for="exportValue">Consignment value (USD)</label>
+          <input type="number" id="exportValue" min="0" placeholder="e.g. 50000" oninput="calcExport()" />
+        </div>
+        <div id="exportTonnesRow" style="display:none;">
+          <label for="exportTonnes">Tonnes per consignment</label>
+          <input type="number" id="exportTonnes" min="0" placeholder="e.g. 100" oninput="calcExport()" />
+        </div>
+      </div>
+
+      <div id="goldNotice" style="font-size:0.72rem; color:var(--muted); font-family:'DM Mono',monospace; margin-bottom:1rem; padding:0.6rem 0.8rem; border:1px dashed rgba(200,155,60,0.25); border-radius:3px; line-height:1.6;">
+        Gold export levy: <span style="color:var(--gold-pale)">USD 200 per kg</span> · Mining and Minerals (Export Levy on Refined Gold) Regulations, 2023, revised May 2024 · Purity: <span style="color:var(--gold-pale)">99.9% minimum</span> · Paid to URA separately from DGSM permit.
+      </div>
+
+      <div class="export-result" id="exportResult">
+        <span style="font-size:0.8rem; color:var(--muted); font-style:italic;">Fill in the fields above to estimate export costs.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    <strong>Important:</strong> This tool is for general estimation only, based on official statutory fees published by the DGSM in 2024 under the Mining and Minerals Act, 2022 and subsidiary regulations. The gold export levy (USD 200/kg) has been subject to legal challenges and revisions — always verify the current rate with URA and DGSM before committing. This tool does not include ESIA fees, legal/consultant fees, surface rights costs, royalties, refinery charges, or AML compliance costs. Always consult a qualified mining lawyer before making investment decisions.
+  </div>
+
+</main>
+
+<script>
+const FEES = {
+  prospecting: {
+    label: "Prospecting Licence (PL)",
+    application: 200000,
+    registration: 0,
+    licence: 800000,
+    rent_annual: 0,
+    rent_unit: null,
+    renewal_app: null,
+    gazettal: 0,
+    notes: "Valid 1 year. Non-renewable. No area-based rent."
+  },
+  exploration: {
+    label: "Exploration Licence (EL)",
+    application: 2000000,
+    registration: 1000000,
+    licence: 0,
+    rent_annual: 75000,
+    rent_unit: "km²",
+    renewal_app: 5000000,
+    renewal_rent: 100000,
+    gazettal: 345000,
+    notes: "Area ≤ 250 km². Renewable once for 3 years."
+  },
+  retention: {
+    label: "Retention Licence (RL)",
+    application: 7000000,
+    registration: 1000000,
+    licence: 0,
+    rent_annual: 200000,
+    rent_unit: "km²",
+    renewal_app: 10000000,
+    renewal_rent: 250000,
+    gazettal: 345000,
+    notes: "Given to EL holder pending development. ≤ 3 years."
+  },
+  large_scale: {
+    label: "Large Scale Mining Licence (LML)",
+    application: 20000000,
+    registration: 1000000,
+    licence: 0,
+    rent_annual: 150000,
+    rent_unit: "hectare",
+    renewal_app: 20000000,
+    gazettal: 345000,
+    notes: "Area ≤ 50 km². Capital investment > UGX 388.2B. ≤ 21 years."
+  },
+  medium_scale: {
+    label: "Medium Scale Mining Licence (MML)",
+    application: 15000000,
+    registration: 1000000,
+    licence: 0,
+    rent_annual: 120000,
+    rent_unit: "hectare",
+    renewal_app: 15000000,
+    gazettal: 345000,
+    notes: "Area ≤ 50 km². ≤ 10 years, renewable for 7 years."
+  },
+  small_scale: {
+    label: "Small Scale Mining Licence (SML)",
+    application: 10000000,
+    registration: 1000000,
+    licence: 0,
+    rent_annual: 100000,
+    rent_unit: "hectare",
+    renewal_app: 10000000,
+    gazettal: 345000,
+    notes: "Area ≤ 10 km². ≤ 5 years. Ugandans only."
+  },
+  artisanal: {
+    label: "Artisanal Mining Licence (AML)",
+    application: 1000000,
+    registration: 1000000,
+    licence: 0,
+    rent_annual: 1500000,
+    rent_unit: "flat",
+    renewal_app: 2000000,
+    gazettal: 345000,
+    notes: "Small-scale, low capital. ≤ 3 years. Ugandans only."
+  },
+  processing: {
+    label: "Mineral Processing Licence (MPL)",
+    application: 300000,
+    registration: 1000000,
+    licence: 5000000,
+    rent_annual: 1000000,
+    rent_unit: "flat",
+    renewal_app: 500000,
+    gazettal: 345000,
+    notes: "≤ 5 years, renewable for 3 years."
+  },
+  smelting: {
+    label: "Mineral Smelting Licence (MSL)",
+    application: 500000,
+    registration: 1000000,
+    licence: 10000000,
+    rent_annual: 5000000,
+    rent_unit: "flat",
+    renewal_app: 1000000,
+    gazettal: 345000,
+    notes: "≤ 15 years, renewable for 10 years."
+  },
+  refining: {
+    label: "Mineral Refining Licence (MRL)",
+    application: 1000000,
+    registration: 1000000,
+    licence: 10000000,
+    rent_annual: 10000000,
+    rent_unit: "flat",
+    renewal_app: 1500000,
+    gazettal: 345000,
+    notes: "≤ 15 years, renewable for 10 years."
+  },
+  dealer_industrial: {
+    label: "Mineral Dealers Licence — Industrial Minerals",
+    application: 500000,
+    registration: 0,
+    licence: 3000000,
+    rent_annual: 0,
+    rent_unit: null,
+    renewal_app: null,
+    gazettal: 0,
+    notes: "Annual licence (expires 31 Dec). Includes: limestone, marble, granite, kaolin, etc."
+  },
+  dealer_base: {
+    label: "Mineral Dealers Licence — Base Metals",
+    application: 500000,
+    registration: 0,
+    licence: 5000000,
+    rent_annual: 0,
+    rent_unit: null,
+    renewal_app: null,
+    gazettal: 0,
+    notes: "Annual licence. Includes: copper, cobalt, iron, tin, lithium, etc."
+  },
+  dealer_precious_metal: {
+    label: "Mineral Dealers Licence — Precious Metals",
+    application: 500000,
+    registration: 0,
+    licence: 10000000,
+    rent_annual: 0,
+    rent_unit: null,
+    renewal_app: null,
+    gazettal: 0,
+    notes: "Annual licence. Includes: gold, silver, platinum, palladium, etc."
+  },
+  dealer_precious_stone: {
+    label: "Mineral Dealers Licence — Precious Stones",
+    application: 500000,
+    registration: 0,
+    licence: 6000000,
+    rent_annual: 0,
+    rent_unit: null,
+    renewal_app: null,
+    gazettal: 0,
+    notes: "Annual licence. Includes: diamond, emerald, ruby, sapphire, etc."
+  },
+  goldsmith: {
+    label: "Goldsmith Licence (GSL)",
+    application: 500000,
+    registration: 0,
+    licence: 5000000,
+    rent_annual: 0,
+    rent_unit: null,
+    renewal_app: null,
+    gazettal: 0,
+    notes: "Annual licence (expires 31 Dec)."
+  }
+};
+
+function fmt(ugx, mode, fxRate) {
+  const u = `UGX ${ugx.toLocaleString()}`;
+  const d = `USD ${(ugx / fxRate).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})}`;
+  if (mode === 'ugx') return u;
+  if (mode === 'usd') return d;
+  return `${u} <span style="color:var(--muted);font-size:0.75em">≈ ${d}</span>`;
+}
+
+// Conversion factors → always billing unit
+// Fees are per hectare or per km² depending on licence
+// 1 km² = 100 hectares | 1 acre = 0.404686 hectares | 1 acre = 0.00404686 km²
+const UNIT_LABELS = { hectare: 'hectares', acre: 'acres', km2: 'km²' };
+
+function toHectares(val, unit) {
+  if (unit === 'hectare') return val;
+  if (unit === 'acre')    return val * 0.404686;
+  if (unit === 'km2')     return val * 100;
+  return val;
+}
+
+function toKm2(val, unit) {
+  if (unit === 'km2')     return val;
+  if (unit === 'hectare') return val / 100;
+  if (unit === 'acre')    return val * 0.00404686;
+  return val;
+}
+
+function n(v, d=2) { return parseFloat(v.toFixed(d)).toLocaleString(undefined, {maximumFractionDigits: d}); }
+
+function calculate() {
+  const key = document.getElementById('licenceType').value;
+  const fxRate = parseFloat(document.getElementById('fxRate').value) || 3750;
+  const years = parseInt(document.getElementById('annualYears').value) || 1;
+  const currency = document.getElementById('currency').value;
+  const isRenewal = document.getElementById('isRenewal').value === 'renewal';
+  const areaRaw = parseFloat(document.getElementById('area').value) || 0;
+  const areaUnit = document.getElementById('areaUnit').value;
+
+  const areaSection = document.getElementById('areaSection');
+  const renewalSection = document.getElementById('renewalSection');
+  const resultCard = document.getElementById('resultCard');
+  const areaConversion = document.getElementById('areaConversion');
+
+  if (!key) {
+    areaSection.style.display = 'none';
+    renewalSection.style.display = 'none';
+    resultCard.innerHTML = '<div class="empty-state">Select a licence type above to see the estimated costs.</div>';
+    return;
+  }
+
+  const f = FEES[key];
+  const needsArea = f.rent_unit && f.rent_unit !== 'flat';
+  const billingUnit = f.rent_unit; // 'hectare' or 'km²'
+
+  // Show/hide area input
+  areaSection.style.display = needsArea ? 'block' : 'none';
+  document.getElementById('areaLabel').textContent = 'Area size';
+
+  // Convert input to billing unit and show conversion hint
+  let billingArea = 0;
+  if (needsArea && areaRaw > 0) {
+    if (billingUnit === 'km²') {
+      billingArea = toKm2(areaRaw, areaUnit);
+    } else {
+      billingArea = toHectares(areaRaw, areaUnit);
+    }
+
+    // Build conversion hint
+    const ha  = toHectares(areaRaw, areaUnit);
+    const km  = toKm2(areaRaw, areaUnit);
+    const ac  = ha / 0.404686;
+    const parts = [];
+    if (areaUnit !== 'hectare') parts.push(`${n(ha)} ha`);
+    if (areaUnit !== 'km2')     parts.push(`${n(km,4)} km²`);
+    if (areaUnit !== 'acre')    parts.push(`${n(ac)} acres`);
+    areaConversion.textContent = parts.length ? `≈ ${parts.join(' · ')}  ·  Billed per ${billingUnit === 'km²' ? 'km²' : 'hectare'}: ${n(billingArea, 2)} ${billingUnit}` : '';
+  } else {
+    areaConversion.textContent = '';
+  }
+
+  // Show/hide renewal
+  const hasRenewal = f.renewal_app !== null && f.renewal_app !== undefined;
+  renewalSection.style.display = hasRenewal ? 'block' : 'none';
+
+  // Compute rent — law charges per whole unit (ceiling)
+  let rentPerYear = 0;
+  const billedUnits = Math.ceil(billingArea);
+  if (f.rent_unit === 'flat') {
+    rentPerYear = f.rent_annual;
+  } else if (needsArea && billingArea > 0) {
+    rentPerYear = f.rent_annual * billedUnits;
+  }
+  if (isRenewal && f.renewal_rent && needsArea && billingArea > 0) {
+    rentPerYear = f.renewal_rent * billedUnits;
+  }
+
+  const appFee = isRenewal && hasRenewal ? f.renewal_app : f.application;
+  const totalRent = rentPerYear * years;
+  const gazettal = f.gazettal || 0;
+  const total = appFee + f.registration + f.licence + totalRent + gazettal;
+
+  let rows = [];
+  rows.push({ desc: isRenewal ? 'Renewal application fee' : 'Application fee', amt: appFee });
+  if (f.registration > 0) rows.push({ desc: 'Registration fee', amt: f.registration });
+  if (f.licence > 0) rows.push({ desc: 'Licence fee', amt: f.licence });
+  if (rentPerYear > 0) {
+    const areaStr = needsArea ? ` × ${billedUnits} ${billingUnit}` : '';
+    rows.push({ desc: `Mineral rent (${years} yr${years>1?'s':''}${areaStr})`, amt: totalRent });
+  } else if (f.rent_annual > 0 && needsArea) {
+    rows.push({ desc: `Mineral rent — enter area above`, amt: 0, note: true });
+  }
+  if (gazettal > 0) rows.push({ desc: 'Gazettal fee', amt: gazettal });
+
+  const rowsHtml = rows.map(r => `
+    <div class="cost-row">
+      <span class="desc">${r.desc}</span>
+      <span class="amt">${r.note ? '<em style="color:var(--muted);font-family:DM Sans">—</em>' : fmt(r.amt, currency, fxRate)}</span>
+    </div>
+  `).join('');
+
+  resultCard.innerHTML = `
+    <div class="result-title">${f.label} <span class="tag">${isRenewal ? 'Renewal' : 'New'}</span></div>
+    <div class="cost-rows">
+      ${rowsHtml}
+      <div class="cost-row total">
+        <span class="desc">Estimated Total</span>
+        <span class="amt">${fmt(total, currency, fxRate)}</span>
+      </div>
+    </div>
+    <div class="usd-note">
+      Rate used: <span>1 USD = ${fxRate.toLocaleString()} UGX</span> · <span>${f.notes}</span>
+    </div>
+  `;
+}
+
+function toggleExport() {
+  const body = document.getElementById('exportBody');
+  const hint = document.getElementById('exportToggleHint');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  hint.textContent = open ? '▲ collapse' : '▼ expand';
+  if (open) calcExport();
+}
+
+function calcExport() {
+  const mineralClass = document.getElementById('exportMineralClass').value;
+  const consignments = parseInt(document.getElementById('exportConsignments').value) || 1;
+  const fxRate = parseFloat(document.getElementById('fxRate').value) || 3750;
+  const currency = document.getElementById('currency').value;
+  const kgRow = document.getElementById('exportKgRow');
+  const valueRow = document.getElementById('exportValueRow');
+  const tonnesRow = document.getElementById('exportTonnesRow');
+  const goldNotice = document.getElementById('goldNotice');
+  const result = document.getElementById('exportResult');
+
+  const isGold = mineralClass === 'gold';
+  const isIndustrial = mineralClass === 'industrial';
+  const isValueBased = mineralClass === 'precious' || mineralClass === 'base';
+
+  kgRow.style.display = isGold ? 'block' : 'none';
+  valueRow.style.display = isValueBased ? 'block' : 'none';
+  tonnesRow.style.display = isIndustrial ? 'block' : 'none';
+  goldNotice.style.display = isGold ? 'block' : 'none';
+
+  const FIXED_FEE = 700000; // UGX per consignment permit
+  const GOLD_LEVY_USD = 200; // USD per kg
+  let variableFee = 0;
+  let variableDesc = '';
+  let goldLevyUGX = 0;
+  let goldLevyDesc = '';
+  let missingInput = false;
+
+  if (isGold) {
+    const kg = parseFloat(document.getElementById('exportKg').value) || 0;
+    if (kg <= 0) { missingInput = true; }
+    else {
+      goldLevyUGX = kg * GOLD_LEVY_USD * fxRate;
+      goldLevyDesc = 'URA export levy: USD ' + GOLD_LEVY_USD + ' x ' + kg + ' kg';
+      variableFee = 0;
+    }
+  } else if (isIndustrial) {
+    const tonnes = parseFloat(document.getElementById('exportTonnes').value) || 0;
+    if (tonnes <= 0) { missingInput = true; }
+    else {
+      variableFee = tonnes * 4000;
+      variableDesc = 'Weight fee: UGX 4,000 x ' + tonnes + ' tonnes';
+    }
+  } else {
+    const usdValue = parseFloat(document.getElementById('exportValue').value) || 0;
+    if (usdValue <= 0) { missingInput = true; }
+    else {
+      const ugxValue = usdValue * fxRate;
+      variableFee = ugxValue * 0.01;
+      variableDesc = 'Value fee: 1% of USD ' + usdValue.toLocaleString() + ' (approx UGX ' + Math.round(ugxValue).toLocaleString() + ')';
+    }
+  }
+
+  if (missingInput) {
+    const hint = isGold ? 'gold weight in kg' : isIndustrial ? 'tonnes' : 'consignment value';
+    result.innerHTML = '<span style="font-size:0.8rem; color:var(--muted); font-style:italic;">Enter ' + hint + ' above to calculate.</span>';
+    return;
+  }
+
+  const permitTotal = FIXED_FEE + variableFee;
+  const goldLevyTotal = goldLevyUGX * consignments;
+  const permitsTotal = permitTotal * consignments;
+  const grandTotal = permitsTotal + goldLevyTotal;
+
+  let rows = '';
+  rows += '<div class="cost-row"><span class="desc">DGSM permit fee (fixed, per consignment)</span><span class="amt">' + fmt(FIXED_FEE, currency, fxRate) + '</span></div>';
+  if (variableFee > 0) rows += '<div class="cost-row"><span class="desc">' + variableDesc + '</span><span class="amt">' + fmt(Math.round(variableFee), currency, fxRate) + '</span></div>';
+  if (goldLevyUGX > 0) {
+    rows += '<div class="cost-row" style="border-top:1px dashed rgba(200,155,60,0.2); margin-top:0.3rem; padding-top:0.6rem;"><span class="desc" style="color:var(--gold-pale);">' + goldLevyDesc + ' (URA levy, per consignment)</span><span class="amt">' + fmt(Math.round(goldLevyUGX), currency, fxRate) + '</span></div>';
+  }
+  rows += '<div class="cost-row total"><span class="desc">Total for ' + consignments + ' consignment' + (consignments > 1 ? 's' : '') + '</span><span class="amt">' + fmt(Math.round(grandTotal), currency, fxRate) + '</span></div>';
+
+  let source = isGold
+    ? 'DGSM permit: S.I. No. 72 (2023) · URA gold levy: Mining and Minerals (Export Levy on Refined Gold) Regulations, 2023, revised May 2024'
+    : 'Mining and Minerals (Licensing) Regulations, 2023 · S.I. No. 72';
+
+  result.innerHTML = '<div class="cost-rows">' + rows + '</div><div class="usd-note" style="margin-top:0.8rem;">Source: <span>' + source + '</span></div>';
 }
 </script>
 </body>

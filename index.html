@@ -316,6 +316,58 @@
     border: 1px solid rgba(200,155,60,0.25);
     border-radius: 4px;
   }
+
+  /* Royalty section */
+  .royalty-card {
+    grid-column: 1 / -1;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(200,155,60,0.18);
+    border-radius: 6px;
+    padding: 1.5rem;
+  }
+
+  /* Print styles */
+  .print-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(200,155,60,0.15);
+    border: 1px solid rgba(200,155,60,0.4);
+    color: var(--gold-light);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 1rem;
+  }
+  .print-btn:hover { background: rgba(200,155,60,0.25); }
+
+  /* FX live rate badge */
+  .fx-live {
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    margin-top: 0.3rem;
+    min-height: 1em;
+  }
+  .fx-live.fresh { color: #7ab87a; }
+  .fx-live.error { color: #b87a7a; }
+
+  @media print {
+    body { background: white !important; color: #1a1208 !important; }
+    header { border-color: #c89b3c; }
+    .print-btn, .toggle-row .toggle-hint, .section-divider { display: none !important; }
+    .export-body, #royaltyBody, #esiaBody { display: block !important; }
+    .card, .result-card, .export-card, .royalty-card { border-color: #c89b3c; background: #fff9ee !important; }
+    .cost-row .desc { color: #5a4a2a !important; }
+    .cost-row .amt { color: #8a6a1a !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
 </style>
 </head>
 <body>
@@ -396,6 +448,7 @@
       <div>
         <label for="fxRate">UGX per 1 USD</label>
         <input type="number" id="fxRate" value="3750" min="1" oninput="calculate()" />
+        <div class="fx-live" id="fxLiveMsg">Fetching live rate...</div>
       </div>
     </div>
     <label for="annualYears">Annual rent — number of years</label>
@@ -411,6 +464,77 @@
   <!-- Result -->
   <div class="result-card" id="resultCard">
     <div class="empty-state">Select a licence type above to see the estimated costs.</div>
+  </div>
+
+  <!-- Royalty Section -->
+  <div class="section-divider"><span>Optional — Royalties &amp; ESIA</span></div>
+
+  <div class="royalty-card">
+    <div class="toggle-row" onclick="toggleRoyalty()">
+      <span class="toggle-label">Royalty &amp; ESIA Cost Estimator</span>
+      <span class="toggle-hint" id="royaltyToggleHint">▼ expand</span>
+    </div>
+    <div id="royaltyBody" style="display:none; margin-top:1.2rem;">
+
+      <!-- Royalty -->
+      <div style="font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); margin-bottom:0.8rem;">Mineral Royalties (paid to URA/DGSM)</div>
+      <p style="font-size:0.76rem; color:var(--muted); line-height:1.7; margin-bottom:1rem;">
+        Royalties are paid on the <strong style="color:var(--parchment)">gross value of minerals extracted</strong>, assessed by DGSM and collected by URA. Distribution: 70% central govt · 15% district · 10% sub-county · 5% landowner.
+      </p>
+
+      <div class="export-grid">
+        <div>
+          <label for="royaltyMineral">Mineral type</label>
+          <select id="royaltyMineral" onchange="calcRoyalty()">
+            <option value="gold">Gold (5% of gross value)</option>
+            <option value="precious_other">Other precious metals/stones (5%)</option>
+            <option value="base_metal">Base metals — cobalt, copper, tin, etc. (3%)</option>
+            <option value="industrial">Industrial minerals — limestone, granite, etc. (3%)</option>
+            <option value="dimension_stone">Dimension stone (3%)</option>
+            <option value="gemstone">Gemstones (5%)</option>
+          </select>
+        </div>
+        <div>
+          <label for="royaltyGrossValue">Estimated annual gross value (USD)</label>
+          <input type="number" id="royaltyGrossValue" min="0" placeholder="e.g. 500000" oninput="calcRoyalty()" />
+        </div>
+        <div>
+          <label for="royaltyYears">Number of years</label>
+          <select id="royaltyYears" onchange="calcRoyalty()">
+            <option value="1">1 year</option>
+            <option value="2">2 years</option>
+            <option value="3">3 years</option>
+            <option value="5">5 years</option>
+            <option value="10">10 years</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="royaltyResult" style="margin-top:0.5rem; margin-bottom:1.5rem;">
+        <span style="font-size:0.8rem; color:var(--muted); font-style:italic;">Enter gross value above to estimate royalties.</span>
+      </div>
+
+      <!-- ESIA -->
+      <div style="font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); margin-bottom:0.8rem; border-top:1px solid rgba(200,155,60,0.15); padding-top:1rem;">ESIA — Environmental &amp; Social Impact Assessment</div>
+      <p style="font-size:0.76rem; color:var(--muted); line-height:1.7; margin-bottom:1rem;">
+        Required for all Large, Medium and Small Scale Mining Licences before operations begin. Conducted by an <strong style="color:var(--parchment)">accredited NEMA consultant</strong>. Cost depends on licence scale and area size. These are indicative market ranges — actual costs vary by consultant and project complexity.
+      </p>
+      <div class="export-grid">
+        <div>
+          <label for="esiaScale">Mining scale</label>
+          <select id="esiaScale" onchange="calcEsia()">
+            <option value="none">Not required (Prospecting / Artisanal)</option>
+            <option value="small">Small Scale Mining Licence (SML)</option>
+            <option value="medium">Medium Scale Mining Licence (MML)</option>
+            <option value="large">Large Scale Mining Licence (LML)</option>
+          </select>
+        </div>
+      </div>
+      <div id="esiaResult" style="margin-top:0.5rem;">
+        <span style="font-size:0.8rem; color:var(--muted); font-style:italic;">Select mining scale to see ESIA cost range.</span>
+      </div>
+
+    </div>
   </div>
 
   <!-- Export Permit Section -->
@@ -483,267 +607,106 @@
     <strong>Important:</strong> This tool is for general estimation only, based on official statutory fees published by the DGSM in 2024 under the Mining and Minerals Act, 2022 and subsidiary regulations. The gold export levy (USD 200/kg) has been subject to legal challenges and revisions — always verify the current rate with URA and DGSM before committing. This tool does not include ESIA fees, legal/consultant fees, surface rights costs, royalties, refinery charges, or AML compliance costs. Always consult a qualified mining lawyer before making investment decisions.
   </div>
 
+
+  <!-- Print / Save -->
+  <div style="grid-column:1/-1; text-align:right;">
+    <button class="print-btn" onclick="window.print()">&#128438; Print / Save as PDF</button>
+  </div>
+
 </main>
 
 <script>
 const FEES = {
-  prospecting: {
-    label: "Prospecting Licence (PL)",
-    application: 200000,
-    registration: 0,
-    licence: 800000,
-    rent_annual: 0,
-    rent_unit: null,
-    renewal_app: null,
-    gazettal: 0,
-    notes: "Valid 1 year. Non-renewable. No area-based rent."
-  },
-  exploration: {
-    label: "Exploration Licence (EL)",
-    application: 2000000,
-    registration: 1000000,
-    licence: 0,
-    rent_annual: 75000,
-    rent_unit: "km²",
-    renewal_app: 5000000,
-    renewal_rent: 100000,
-    gazettal: 345000,
-    notes: "Area ≤ 250 km². Renewable once for 3 years."
-  },
-  retention: {
-    label: "Retention Licence (RL)",
-    application: 7000000,
-    registration: 1000000,
-    licence: 0,
-    rent_annual: 200000,
-    rent_unit: "km²",
-    renewal_app: 10000000,
-    renewal_rent: 250000,
-    gazettal: 345000,
-    notes: "Given to EL holder pending development. ≤ 3 years."
-  },
-  large_scale: {
-    label: "Large Scale Mining Licence (LML)",
-    application: 20000000,
-    registration: 1000000,
-    licence: 0,
-    rent_annual: 150000,
-    rent_unit: "hectare",
-    renewal_app: 20000000,
-    gazettal: 345000,
-    notes: "Area ≤ 50 km². Capital investment > UGX 388.2B. ≤ 21 years."
-  },
-  medium_scale: {
-    label: "Medium Scale Mining Licence (MML)",
-    application: 15000000,
-    registration: 1000000,
-    licence: 0,
-    rent_annual: 120000,
-    rent_unit: "hectare",
-    renewal_app: 15000000,
-    gazettal: 345000,
-    notes: "Area ≤ 50 km². ≤ 10 years, renewable for 7 years."
-  },
-  small_scale: {
-    label: "Small Scale Mining Licence (SML)",
-    application: 10000000,
-    registration: 1000000,
-    licence: 0,
-    rent_annual: 100000,
-    rent_unit: "hectare",
-    renewal_app: 10000000,
-    gazettal: 345000,
-    notes: "Area ≤ 10 km². ≤ 5 years. Ugandans only."
-  },
-  artisanal: {
-    label: "Artisanal Mining Licence (AML)",
-    application: 1000000,
-    registration: 1000000,
-    licence: 0,
-    rent_annual: 1500000,
-    rent_unit: "flat",
-    renewal_app: 2000000,
-    gazettal: 345000,
-    notes: "Small-scale, low capital. ≤ 3 years. Ugandans only."
-  },
-  processing: {
-    label: "Mineral Processing Licence (MPL)",
-    application: 300000,
-    registration: 1000000,
-    licence: 5000000,
-    rent_annual: 1000000,
-    rent_unit: "flat",
-    renewal_app: 500000,
-    gazettal: 345000,
-    notes: "≤ 5 years, renewable for 3 years."
-  },
-  smelting: {
-    label: "Mineral Smelting Licence (MSL)",
-    application: 500000,
-    registration: 1000000,
-    licence: 10000000,
-    rent_annual: 5000000,
-    rent_unit: "flat",
-    renewal_app: 1000000,
-    gazettal: 345000,
-    notes: "≤ 15 years, renewable for 10 years."
-  },
-  refining: {
-    label: "Mineral Refining Licence (MRL)",
-    application: 1000000,
-    registration: 1000000,
-    licence: 10000000,
-    rent_annual: 10000000,
-    rent_unit: "flat",
-    renewal_app: 1500000,
-    gazettal: 345000,
-    notes: "≤ 15 years, renewable for 10 years."
-  },
-  dealer_industrial: {
-    label: "Mineral Dealers Licence — Industrial Minerals",
-    application: 500000,
-    registration: 0,
-    licence: 3000000,
-    rent_annual: 0,
-    rent_unit: null,
-    renewal_app: null,
-    gazettal: 0,
-    notes: "Annual licence (expires 31 Dec). Includes: limestone, marble, granite, kaolin, etc."
-  },
-  dealer_base: {
-    label: "Mineral Dealers Licence — Base Metals",
-    application: 500000,
-    registration: 0,
-    licence: 5000000,
-    rent_annual: 0,
-    rent_unit: null,
-    renewal_app: null,
-    gazettal: 0,
-    notes: "Annual licence. Includes: copper, cobalt, iron, tin, lithium, etc."
-  },
-  dealer_precious_metal: {
-    label: "Mineral Dealers Licence — Precious Metals",
-    application: 500000,
-    registration: 0,
-    licence: 10000000,
-    rent_annual: 0,
-    rent_unit: null,
-    renewal_app: null,
-    gazettal: 0,
-    notes: "Annual licence. Includes: gold, silver, platinum, palladium, etc."
-  },
-  dealer_precious_stone: {
-    label: "Mineral Dealers Licence — Precious Stones",
-    application: 500000,
-    registration: 0,
-    licence: 6000000,
-    rent_annual: 0,
-    rent_unit: null,
-    renewal_app: null,
-    gazettal: 0,
-    notes: "Annual licence. Includes: diamond, emerald, ruby, sapphire, etc."
-  },
-  goldsmith: {
-    label: "Goldsmith Licence (GSL)",
-    application: 500000,
-    registration: 0,
-    licence: 5000000,
-    rent_annual: 0,
-    rent_unit: null,
-    renewal_app: null,
-    gazettal: 0,
-    notes: "Annual licence (expires 31 Dec)."
-  }
+  prospecting:          { label:"Prospecting Licence (PL)", application:200000, registration:0, licence:800000, rent_annual:0, rent_unit:null, renewal_app:null, gazettal:0, notes:"Valid 1 year. Non-renewable. No area-based rent." },
+  exploration:          { label:"Exploration Licence (EL)", application:2000000, registration:1000000, licence:0, rent_annual:75000, rent_unit:"km²", renewal_app:5000000, renewal_rent:100000, gazettal:345000, notes:"Area ≤ 250 km². Renewable once for 3 years." },
+  retention:            { label:"Retention Licence (RL)", application:7000000, registration:1000000, licence:0, rent_annual:200000, rent_unit:"km²", renewal_app:10000000, renewal_rent:250000, gazettal:345000, notes:"Given to EL holder pending development. ≤ 3 years." },
+  large_scale:          { label:"Large Scale Mining Licence (LML)", application:20000000, registration:1000000, licence:0, rent_annual:150000, rent_unit:"hectare", renewal_app:20000000, gazettal:345000, notes:"Area ≤ 50 km². Capital investment > UGX 388.2B. ≤ 21 years." },
+  medium_scale:         { label:"Medium Scale Mining Licence (MML)", application:15000000, registration:1000000, licence:0, rent_annual:120000, rent_unit:"hectare", renewal_app:15000000, gazettal:345000, notes:"Area ≤ 50 km². ≤ 10 years, renewable for 7 years." },
+  small_scale:          { label:"Small Scale Mining Licence (SML)", application:10000000, registration:1000000, licence:0, rent_annual:100000, rent_unit:"hectare", renewal_app:10000000, gazettal:345000, notes:"Area ≤ 10 km². ≤ 5 years. Ugandans only." },
+  artisanal:            { label:"Artisanal Mining Licence (AML)", application:1000000, registration:1000000, licence:0, rent_annual:1500000, rent_unit:"flat", renewal_app:2000000, gazettal:345000, notes:"Small-scale, low capital. ≤ 3 years. Ugandans only." },
+  processing:           { label:"Mineral Processing Licence (MPL)", application:300000, registration:1000000, licence:5000000, rent_annual:1000000, rent_unit:"flat", renewal_app:500000, gazettal:345000, notes:"≤ 5 years, renewable for 3 years." },
+  smelting:             { label:"Mineral Smelting Licence (MSL)", application:500000, registration:1000000, licence:10000000, rent_annual:5000000, rent_unit:"flat", renewal_app:1000000, gazettal:345000, notes:"≤ 15 years, renewable for 10 years." },
+  refining:             { label:"Mineral Refining Licence (MRL)", application:1000000, registration:1000000, licence:10000000, rent_annual:10000000, rent_unit:"flat", renewal_app:1500000, gazettal:345000, notes:"≤ 15 years, renewable for 10 years." },
+  dealer_industrial:    { label:"Mineral Dealers Licence — Industrial Minerals", application:500000, registration:0, licence:3000000, rent_annual:0, rent_unit:null, renewal_app:null, gazettal:0, notes:"Annual licence (expires 31 Dec). Includes: limestone, marble, granite, kaolin, etc." },
+  dealer_base:          { label:"Mineral Dealers Licence — Base Metals", application:500000, registration:0, licence:5000000, rent_annual:0, rent_unit:null, renewal_app:null, gazettal:0, notes:"Annual licence. Includes: copper, cobalt, iron, tin, lithium, etc." },
+  dealer_precious_metal:{ label:"Mineral Dealers Licence — Precious Metals", application:500000, registration:0, licence:10000000, rent_annual:0, rent_unit:null, renewal_app:null, gazettal:0, notes:"Annual licence. Includes: gold, silver, platinum, palladium, etc." },
+  dealer_precious_stone:{ label:"Mineral Dealers Licence — Precious Stones", application:500000, registration:0, licence:6000000, rent_annual:0, rent_unit:null, renewal_app:null, gazettal:0, notes:"Annual licence. Includes: diamond, emerald, ruby, sapphire, etc." },
+  goldsmith:            { label:"Goldsmith Licence (GSL)", application:500000, registration:0, licence:5000000, rent_annual:0, rent_unit:null, renewal_app:null, gazettal:0, notes:"Annual licence (expires 31 Dec)." }
 };
 
+// ── Formatting ────────────────────────────────────────────────
 function fmt(ugx, mode, fxRate) {
-  const u = `UGX ${ugx.toLocaleString()}`;
-  const d = `USD ${(ugx / fxRate).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})}`;
-  if (mode === 'ugx') return u;
-  if (mode === 'usd') return d;
-  return `${u} <span style="color:var(--muted);font-size:0.75em">≈ ${d}</span>`;
+  const u = "UGX " + Math.round(ugx).toLocaleString();
+  const d = "USD " + (ugx / fxRate).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+  if (mode === "ugx") return u;
+  if (mode === "usd") return d;
+  return u + " <span style=\"color:var(--muted);font-size:0.75em\">≈ " + d + "</span>";
 }
 
-// Conversion factors → always billing unit
-// Fees are per hectare or per km² depending on licence
-// 1 km² = 100 hectares | 1 acre = 0.404686 hectares | 1 acre = 0.00404686 km²
-const UNIT_LABELS = { hectare: 'hectares', acre: 'acres', km2: 'km²' };
-
+// ── Area conversion ───────────────────────────────────────────
 function toHectares(val, unit) {
-  if (unit === 'hectare') return val;
-  if (unit === 'acre')    return val * 0.404686;
-  if (unit === 'km2')     return val * 100;
+  if (unit === "hectare") return val;
+  if (unit === "acre")    return val * 0.404686;
+  if (unit === "km2")     return val * 100;
   return val;
 }
-
 function toKm2(val, unit) {
-  if (unit === 'km2')     return val;
-  if (unit === 'hectare') return val / 100;
-  if (unit === 'acre')    return val * 0.00404686;
+  if (unit === "km2")     return val;
+  if (unit === "hectare") return val / 100;
+  if (unit === "acre")    return val * 0.00404686;
   return val;
 }
+function n(v, d) { d = d||2; return parseFloat(v.toFixed(d)).toLocaleString(undefined, {maximumFractionDigits:d}); }
 
-function n(v, d=2) { return parseFloat(v.toFixed(d)).toLocaleString(undefined, {maximumFractionDigits: d}); }
-
+// ── Main licence calculator ───────────────────────────────────
 function calculate() {
-  const key = document.getElementById('licenceType').value;
-  const fxRate = parseFloat(document.getElementById('fxRate').value) || 3750;
-  const years = parseInt(document.getElementById('annualYears').value) || 1;
-  const currency = document.getElementById('currency').value;
-  const isRenewal = document.getElementById('isRenewal').value === 'renewal';
-  const areaRaw = parseFloat(document.getElementById('area').value) || 0;
-  const areaUnit = document.getElementById('areaUnit').value;
-
-  const areaSection = document.getElementById('areaSection');
-  const renewalSection = document.getElementById('renewalSection');
-  const resultCard = document.getElementById('resultCard');
-  const areaConversion = document.getElementById('areaConversion');
+  var key = document.getElementById("licenceType").value;
+  var fxRate = parseFloat(document.getElementById("fxRate").value) || 3750;
+  var years = parseInt(document.getElementById("annualYears").value) || 1;
+  var currency = document.getElementById("currency").value;
+  var isRenewal = document.getElementById("isRenewal").value === "renewal";
+  var areaRaw = parseFloat(document.getElementById("area").value) || 0;
+  var areaUnit = document.getElementById("areaUnit").value;
+  var areaSection = document.getElementById("areaSection");
+  var renewalSection = document.getElementById("renewalSection");
+  var resultCard = document.getElementById("resultCard");
+  var areaConversion = document.getElementById("areaConversion");
 
   if (!key) {
-    areaSection.style.display = 'none';
-    renewalSection.style.display = 'none';
-    resultCard.innerHTML = '<div class="empty-state">Select a licence type above to see the estimated costs.</div>';
+    areaSection.style.display = "none";
+    renewalSection.style.display = "none";
+    resultCard.innerHTML = "<div class=\"empty-state\">Select a licence type above to see the estimated costs.</div>";
     return;
   }
 
-  const f = FEES[key];
-  const needsArea = f.rent_unit && f.rent_unit !== 'flat';
-  const billingUnit = f.rent_unit; // 'hectare' or 'km²'
+  var f = FEES[key];
+  var needsArea = f.rent_unit && f.rent_unit !== "flat";
+  var billingUnit = f.rent_unit;
 
-  // Show/hide area input
-  areaSection.style.display = needsArea ? 'block' : 'none';
-  document.getElementById('areaLabel').textContent = 'Area size';
+  areaSection.style.display = needsArea ? "block" : "none";
+  document.getElementById("areaLabel").textContent = "Area size";
 
-  // Convert input to billing unit and show conversion hint
-  let billingArea = 0;
+  var billingArea = 0;
   if (needsArea && areaRaw > 0) {
-    if (billingUnit === 'km²') {
-      billingArea = toKm2(areaRaw, areaUnit);
-    } else {
-      billingArea = toHectares(areaRaw, areaUnit);
-    }
-
-    // Build conversion hint
-    const ha  = toHectares(areaRaw, areaUnit);
-    const km  = toKm2(areaRaw, areaUnit);
-    const ac  = ha / 0.404686;
-    const parts = [];
-    if (areaUnit !== 'hectare') parts.push(`${n(ha)} ha`);
-    if (areaUnit !== 'km2')     parts.push(`${n(km,4)} km²`);
-    if (areaUnit !== 'acre')    parts.push(`${n(ac)} acres`);
-    areaConversion.textContent = parts.length ? `≈ ${parts.join(' · ')}  ·  Billed per ${billingUnit === 'km²' ? 'km²' : 'hectare'}: ${n(billingArea, 2)} ${billingUnit}` : '';
+    billingArea = billingUnit === "km²" ? toKm2(areaRaw, areaUnit) : toHectares(areaRaw, areaUnit);
+    var ha = toHectares(areaRaw, areaUnit);
+    var km = toKm2(areaRaw, areaUnit);
+    var ac = ha / 0.404686;
+    var parts = [];
+    if (areaUnit !== "hectare") parts.push(n(ha) + " ha");
+    if (areaUnit !== "km2")     parts.push(n(km,4) + " km²");
+    if (areaUnit !== "acre")    parts.push(n(ac) + " acres");
+    areaConversion.textContent = parts.length ? "≈ " + parts.join(" · ") + "  ·  Billed per " + (billingUnit === "km²" ? "km²" : "hectare") + ": " + n(billingArea,2) + " " + billingUnit : "";
   } else {
-    areaConversion.textContent = '';
+    areaConversion.textContent = "";
   }
 
-  // Show/hide renewal
-  const hasRenewal = f.renewal_app !== null && f.renewal_app !== undefined;
-  renewalSection.style.display = hasRenewal ? 'block' : 'none';
+  var hasRenewal = f.renewal_app !== null && f.renewal_app !== undefined;
+  renewalSection.style.display = hasRenewal ? "block" : "none";
 
-  // Compute rent — law charges per whole unit (ceiling)
-  let rentPerYear = 0;
-  const billedUnits = Math.ceil(billingArea);
-  if (f.rent_unit === 'flat') {
+  var billedUnits = Math.ceil(billingArea);
+  var rentPerYear = 0;
+  if (f.rent_unit === "flat") {
     rentPerYear = f.rent_annual;
   } else if (needsArea && billingArea > 0) {
     rentPerYear = f.rent_annual * billedUnits;
@@ -752,132 +715,210 @@ function calculate() {
     rentPerYear = f.renewal_rent * billedUnits;
   }
 
-  const appFee = isRenewal && hasRenewal ? f.renewal_app : f.application;
-  const totalRent = rentPerYear * years;
-  const gazettal = f.gazettal || 0;
-  const total = appFee + f.registration + f.licence + totalRent + gazettal;
+  var appFee = isRenewal && hasRenewal ? f.renewal_app : f.application;
+  var totalRent = rentPerYear * years;
+  var gazettal = f.gazettal || 0;
+  var total = appFee + f.registration + f.licence + totalRent + gazettal;
 
-  let rows = [];
-  rows.push({ desc: isRenewal ? 'Renewal application fee' : 'Application fee', amt: appFee });
-  if (f.registration > 0) rows.push({ desc: 'Registration fee', amt: f.registration });
-  if (f.licence > 0) rows.push({ desc: 'Licence fee', amt: f.licence });
+  var rows = [];
+  rows.push({ desc: isRenewal ? "Renewal application fee" : "Application fee", amt: appFee });
+  if (f.registration > 0) rows.push({ desc: "Registration fee", amt: f.registration });
+  if (f.licence > 0) rows.push({ desc: "Licence fee", amt: f.licence });
   if (rentPerYear > 0) {
-    const areaStr = needsArea ? ` × ${billedUnits} ${billingUnit}` : '';
-    rows.push({ desc: `Mineral rent (${years} yr${years>1?'s':''}${areaStr})`, amt: totalRent });
+    rows.push({ desc: "Mineral rent (" + years + " yr" + (years>1?"s":"") + (needsArea ? " × " + billedUnits + " " + billingUnit : "") + ")", amt: totalRent });
   } else if (f.rent_annual > 0 && needsArea) {
-    rows.push({ desc: `Mineral rent — enter area above`, amt: 0, note: true });
+    rows.push({ desc: "Mineral rent — enter area above", amt: 0, note: true });
   }
-  if (gazettal > 0) rows.push({ desc: 'Gazettal fee', amt: gazettal });
+  if (gazettal > 0) rows.push({ desc: "Gazettal fee", amt: gazettal });
 
-  const rowsHtml = rows.map(r => `
-    <div class="cost-row">
-      <span class="desc">${r.desc}</span>
-      <span class="amt">${r.note ? '<em style="color:var(--muted);font-family:DM Sans">—</em>' : fmt(r.amt, currency, fxRate)}</span>
-    </div>
-  `).join('');
+  var rowsHtml = rows.map(function(r) {
+    return "<div class=\"cost-row\"><span class=\"desc\">" + r.desc + "</span><span class=\"amt\">" + (r.note ? "<em style=\"color:var(--muted)\">—</em>" : fmt(r.amt, currency, fxRate)) + "</span></div>";
+  }).join("");
 
-  resultCard.innerHTML = `
-    <div class="result-title">${f.label} <span class="tag">${isRenewal ? 'Renewal' : 'New'}</span></div>
-    <div class="cost-rows">
-      ${rowsHtml}
-      <div class="cost-row total">
-        <span class="desc">Estimated Total</span>
-        <span class="amt">${fmt(total, currency, fxRate)}</span>
-      </div>
-    </div>
-    <div class="usd-note">
-      Rate used: <span>1 USD = ${fxRate.toLocaleString()} UGX</span> · <span>${f.notes}</span>
-    </div>
-  `;
+  resultCard.innerHTML = "<div class=\"result-title\">" + f.label + " <span class=\"tag\">" + (isRenewal?"Renewal":"New") + "</span></div>"
+    + "<div class=\"cost-rows\">" + rowsHtml
+    + "<div class=\"cost-row total\"><span class=\"desc\">Estimated Total</span><span class=\"amt\">" + fmt(total, currency, fxRate) + "</span></div></div>"
+    + "<div class=\"usd-note\">Rate used: <span>1 USD = " + fxRate.toLocaleString() + " UGX</span> · <span>" + f.notes + "</span></div>";
 }
 
+// ── Toggle helpers ────────────────────────────────────────────
 function toggleExport() {
-  const body = document.getElementById('exportBody');
-  const hint = document.getElementById('exportToggleHint');
-  const open = body.style.display === 'none';
-  body.style.display = open ? 'block' : 'none';
-  hint.textContent = open ? '▲ collapse' : '▼ expand';
-  if (open) calcExport();
+  var body = document.getElementById("exportBody");
+  var hint = document.getElementById("exportToggleHint");
+  var open = body.style.display === "none";
+  body.style.display = open ? "block" : "none";
+  hint.textContent = open ? "▲ collapse" : "▼ expand";
 }
 
+function toggleRoyalty() {
+  var body = document.getElementById("royaltyBody");
+  var hint = document.getElementById("royaltyToggleHint");
+  var open = body.style.display === "none";
+  body.style.display = open ? "block" : "none";
+  hint.textContent = open ? "▲ collapse" : "▼ expand";
+}
+
+// ── Export permit calculator ──────────────────────────────────
 function calcExport() {
-  const mineralClass = document.getElementById('exportMineralClass').value;
-  const consignments = parseInt(document.getElementById('exportConsignments').value) || 1;
-  const fxRate = parseFloat(document.getElementById('fxRate').value) || 3750;
-  const currency = document.getElementById('currency').value;
-  const kgRow = document.getElementById('exportKgRow');
-  const valueRow = document.getElementById('exportValueRow');
-  const tonnesRow = document.getElementById('exportTonnesRow');
-  const goldNotice = document.getElementById('goldNotice');
-  const result = document.getElementById('exportResult');
+  var mineralClass = document.getElementById("exportMineralClass").value;
+  var consignments = parseInt(document.getElementById("exportConsignments").value) || 1;
+  var fxRate = parseFloat(document.getElementById("fxRate").value) || 3750;
+  var currency = document.getElementById("currency").value;
+  var kgRow = document.getElementById("exportKgRow");
+  var valueRow = document.getElementById("exportValueRow");
+  var tonnesRow = document.getElementById("exportTonnesRow");
+  var goldNotice = document.getElementById("goldNotice");
+  var result = document.getElementById("exportResult");
 
-  const isGold = mineralClass === 'gold';
-  const isIndustrial = mineralClass === 'industrial';
-  const isValueBased = mineralClass === 'precious' || mineralClass === 'base';
+  var isGold = mineralClass === "gold";
+  var isIndustrial = mineralClass === "industrial";
+  var isValueBased = mineralClass === "precious" || mineralClass === "base";
 
-  kgRow.style.display = isGold ? 'block' : 'none';
-  valueRow.style.display = isValueBased ? 'block' : 'none';
-  tonnesRow.style.display = isIndustrial ? 'block' : 'none';
-  goldNotice.style.display = isGold ? 'block' : 'none';
+  kgRow.style.display = isGold ? "block" : "none";
+  valueRow.style.display = isValueBased ? "block" : "none";
+  tonnesRow.style.display = isIndustrial ? "block" : "none";
+  goldNotice.style.display = isGold ? "block" : "none";
 
-  const FIXED_FEE = 700000; // UGX per consignment permit
-  const GOLD_LEVY_USD = 200; // USD per kg
-  let variableFee = 0;
-  let variableDesc = '';
-  let goldLevyUGX = 0;
-  let goldLevyDesc = '';
-  let missingInput = false;
+  var FIXED_FEE = 700000;
+  var GOLD_LEVY_USD = 200;
+  var variableFee = 0;
+  var variableDesc = "";
+  var goldLevyUGX = 0;
+  var goldLevyDesc = "";
+  var missingInput = false;
 
   if (isGold) {
-    const kg = parseFloat(document.getElementById('exportKg').value) || 0;
+    var kg = parseFloat(document.getElementById("exportKg").value) || 0;
     if (kg <= 0) { missingInput = true; }
     else {
       goldLevyUGX = kg * GOLD_LEVY_USD * fxRate;
-      goldLevyDesc = 'URA export levy: USD ' + GOLD_LEVY_USD + ' x ' + kg + ' kg';
-      variableFee = 0;
+      goldLevyDesc = "URA export levy: USD " + GOLD_LEVY_USD + " x " + kg + " kg";
     }
   } else if (isIndustrial) {
-    const tonnes = parseFloat(document.getElementById('exportTonnes').value) || 0;
+    var tonnes = parseFloat(document.getElementById("exportTonnes").value) || 0;
     if (tonnes <= 0) { missingInput = true; }
     else {
       variableFee = tonnes * 4000;
-      variableDesc = 'Weight fee: UGX 4,000 x ' + tonnes + ' tonnes';
+      variableDesc = "Weight fee: UGX 4,000 x " + tonnes + " tonnes";
     }
   } else {
-    const usdValue = parseFloat(document.getElementById('exportValue').value) || 0;
+    var usdValue = parseFloat(document.getElementById("exportValue").value) || 0;
     if (usdValue <= 0) { missingInput = true; }
     else {
-      const ugxValue = usdValue * fxRate;
+      var ugxValue = usdValue * fxRate;
       variableFee = ugxValue * 0.01;
-      variableDesc = 'Value fee: 1% of USD ' + usdValue.toLocaleString() + ' (approx UGX ' + Math.round(ugxValue).toLocaleString() + ')';
+      variableDesc = "Value fee: 1% of USD " + usdValue.toLocaleString() + " (approx UGX " + Math.round(ugxValue).toLocaleString() + ")";
     }
   }
 
   if (missingInput) {
-    const hint = isGold ? 'gold weight in kg' : isIndustrial ? 'tonnes' : 'consignment value';
-    result.innerHTML = '<span style="font-size:0.8rem; color:var(--muted); font-style:italic;">Enter ' + hint + ' above to calculate.</span>';
+    var hint = isGold ? "gold weight in kg" : isIndustrial ? "tonnes" : "consignment value";
+    result.innerHTML = "<span style=\"font-size:0.8rem; color:var(--muted); font-style:italic;\">Enter " + hint + " above to calculate.</span>";
     return;
   }
 
-  const permitTotal = FIXED_FEE + variableFee;
-  const goldLevyTotal = goldLevyUGX * consignments;
-  const permitsTotal = permitTotal * consignments;
-  const grandTotal = permitsTotal + goldLevyTotal;
+  var permitTotal = FIXED_FEE + variableFee;
+  var goldLevyTotal = goldLevyUGX * consignments;
+  var permitsTotal = permitTotal * consignments;
+  var grandTotal = permitsTotal + goldLevyTotal;
 
-  let rows = '';
-  rows += '<div class="cost-row"><span class="desc">DGSM permit fee (fixed, per consignment)</span><span class="amt">' + fmt(FIXED_FEE, currency, fxRate) + '</span></div>';
-  if (variableFee > 0) rows += '<div class="cost-row"><span class="desc">' + variableDesc + '</span><span class="amt">' + fmt(Math.round(variableFee), currency, fxRate) + '</span></div>';
-  if (goldLevyUGX > 0) {
-    rows += '<div class="cost-row" style="border-top:1px dashed rgba(200,155,60,0.2); margin-top:0.3rem; padding-top:0.6rem;"><span class="desc" style="color:var(--gold-pale);">' + goldLevyDesc + ' (URA levy, per consignment)</span><span class="amt">' + fmt(Math.round(goldLevyUGX), currency, fxRate) + '</span></div>';
-  }
-  rows += '<div class="cost-row total"><span class="desc">Total for ' + consignments + ' consignment' + (consignments > 1 ? 's' : '') + '</span><span class="amt">' + fmt(Math.round(grandTotal), currency, fxRate) + '</span></div>';
+  var rows = "";
+  rows += "<div class=\"cost-row\"><span class=\"desc\">DGSM permit fee (fixed, per consignment)</span><span class=\"amt\">" + fmt(FIXED_FEE, currency, fxRate) + "</span></div>";
+  if (variableFee > 0) rows += "<div class=\"cost-row\"><span class=\"desc\">" + variableDesc + "</span><span class=\"amt\">" + fmt(Math.round(variableFee), currency, fxRate) + "</span></div>";
+  if (goldLevyUGX > 0) rows += "<div class=\"cost-row\" style=\"border-top:1px dashed rgba(200,155,60,0.2); margin-top:0.3rem;\"><span class=\"desc\" style=\"color:var(--gold-pale);\">" + goldLevyDesc + " (per consignment)</span><span class=\"amt\">" + fmt(Math.round(goldLevyUGX), currency, fxRate) + "</span></div>";
+  rows += "<div class=\"cost-row total\"><span class=\"desc\">Total for " + consignments + " consignment" + (consignments>1?"s":"") + "</span><span class=\"amt\">" + fmt(Math.round(grandTotal), currency, fxRate) + "</span></div>";
 
-  let source = isGold
-    ? 'DGSM permit: S.I. No. 72 (2023) · URA gold levy: Mining and Minerals (Export Levy on Refined Gold) Regulations, 2023, revised May 2024'
-    : 'Mining and Minerals (Licensing) Regulations, 2023 · S.I. No. 72';
-
-  result.innerHTML = '<div class="cost-rows">' + rows + '</div><div class="usd-note" style="margin-top:0.8rem;">Source: <span>' + source + '</span></div>';
+  var source = isGold ? "DGSM permit: S.I. No. 72 (2023) · URA gold levy: Export Levy on Refined Gold Regulations, 2023, revised May 2024" : "Mining and Minerals (Licensing) Regulations, 2023 · S.I. No. 72";
+  result.innerHTML = "<div class=\"cost-rows\">" + rows + "</div><div class=\"usd-note\" style=\"margin-top:0.8rem;\">Source: <span>" + source + "</span></div>";
 }
+
+// ── Royalty calculator ────────────────────────────────────────
+var ROYALTY_RATES = {
+  gold:            { rate: 0.05, note: "5% of gross value — Mining and Minerals Act 2022, 3rd Schedule" },
+  precious_other:  { rate: 0.05, note: "5% of gross value" },
+  base_metal:      { rate: 0.03, note: "3% of gross value — copper, cobalt, tin, coltan, etc." },
+  industrial:      { rate: 0.03, note: "3% of gross value — limestone, granite, kaolin, etc." },
+  dimension_stone: { rate: 0.03, note: "3% of gross value" },
+  gemstone:        { rate: 0.05, note: "5% of gross value" }
+};
+
+function calcRoyalty() {
+  var mineralKey = document.getElementById("royaltyMineral").value;
+  var grossUSD = parseFloat(document.getElementById("royaltyGrossValue").value) || 0;
+  var years = parseInt(document.getElementById("royaltyYears").value) || 1;
+  var fxRate = parseFloat(document.getElementById("fxRate").value) || 3750;
+  var currency = document.getElementById("currency").value;
+  var result = document.getElementById("royaltyResult");
+
+  if (grossUSD <= 0) {
+    result.innerHTML = "<span style=\"font-size:0.8rem; color:var(--muted); font-style:italic;\">Enter gross value above to estimate royalties.</span>";
+    return;
+  }
+  var r = ROYALTY_RATES[mineralKey];
+  var annualRoyaltyUGX = grossUSD * r.rate * fxRate;
+  var totalUGX = annualRoyaltyUGX * years;
+  var central   = totalUGX * 0.70;
+  var district  = totalUGX * 0.15;
+  var subcounty = totalUGX * 0.10;
+  var landowner = totalUGX * 0.05;
+
+  result.innerHTML = "<div class=\"cost-rows\">"
+    + "<div class=\"cost-row\"><span class=\"desc\">Annual royalty (" + (r.rate*100) + "% of USD " + grossUSD.toLocaleString() + ")</span><span class=\"amt\">" + fmt(Math.round(annualRoyaltyUGX), currency, fxRate) + "</span></div>"
+    + "<div class=\"cost-row total\"><span class=\"desc\">Total over " + years + " year" + (years>1?"s":"") + "</span><span class=\"amt\">" + fmt(Math.round(totalUGX), currency, fxRate) + "</span></div>"
+    + "</div>"
+    + "<div style=\"margin-top:0.8rem; font-size:0.72rem; color:var(--muted); line-height:1.9;\">"
+    + "<strong style=\"color:var(--gold-pale);\">Royalty distribution:</strong><br>"
+    + "70% Central Govt &nbsp;→ " + fmt(Math.round(central), currency, fxRate) + "<br>"
+    + "15% District &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ " + fmt(Math.round(district), currency, fxRate) + "<br>"
+    + "10% Sub-county &nbsp;&nbsp;&nbsp;→ " + fmt(Math.round(subcounty), currency, fxRate) + "<br>"
+    + "5% Landowner &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ " + fmt(Math.round(landowner), currency, fxRate) + "<br>"
+    + "<span style=\"font-size:0.65rem;\">" + r.note + "</span>"
+    + "</div>";
+}
+
+// ── ESIA calculator ───────────────────────────────────────────
+var ESIA_RANGES = {
+  none:   null,
+  small:  { low:15000,  high:40000,  note:"Small Scale: Typically USD 15,000–40,000. Includes NEMA consultant fees, environmental audit, community consultation. NEMA approval required before operations." },
+  medium: { low:40000,  high:120000, note:"Medium Scale: Typically USD 40,000–120,000 depending on area and complexity. Includes full ESIA report, public hearings, and NEMA certificate of approval." },
+  large:  { low:100000, high:400000, note:"Large Scale: Typically USD 100,000–400,000+. Complex multi-stakeholder process including social impact, resettlement plans, biodiversity surveys. Can take 12–24 months." }
+};
+
+function calcEsia() {
+  var scale = document.getElementById("esiaScale").value;
+  var fxRate = parseFloat(document.getElementById("fxRate").value) || 3750;
+  var currency = document.getElementById("currency").value;
+  var result = document.getElementById("esiaResult");
+  if (scale === "none") {
+    result.innerHTML = "<span style=\"font-size:0.8rem; color:var(--muted);\">ESIA not required for this licence type. However, an Environmental Audit may still be recommended by NEMA.</span>";
+    return;
+  }
+  var e = ESIA_RANGES[scale];
+  result.innerHTML = "<div class=\"export-result\"><div class=\"cost-rows\">"
+    + "<div class=\"cost-row\"><span class=\"desc\">ESIA cost — low estimate</span><span class=\"amt\">" + fmt(Math.round(e.low * fxRate), currency, fxRate) + "</span></div>"
+    + "<div class=\"cost-row\"><span class=\"desc\">ESIA cost — high estimate</span><span class=\"amt\">" + fmt(Math.round(e.high * fxRate), currency, fxRate) + "</span></div>"
+    + "</div><div class=\"usd-note\" style=\"margin-top:0.8rem;\">" + e.note + "</div></div>";
+}
+
+// ── Live FX rate ──────────────────────────────────────────────
+async function fetchLiveFx() {
+  var msg = document.getElementById("fxLiveMsg");
+  try {
+    var res = await fetch("https://open.er-api.com/v6/latest/USD");
+    var data = await res.json();
+    if (data && data.rates && data.rates.UGX) {
+      var rate = Math.round(data.rates.UGX);
+      document.getElementById("fxRate").value = rate;
+      msg.textContent = "Live rate fetched: 1 USD = " + rate.toLocaleString() + " UGX";
+      msg.className = "fx-live fresh";
+      calculate();
+    }
+  } catch(e) {
+    msg.textContent = "Live rate unavailable — using default 3,750";
+    msg.className = "fx-live error";
+  }
+}
+fetchLiveFx();
 </script>
 </body>
 </html>
